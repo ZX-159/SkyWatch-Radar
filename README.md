@@ -1,75 +1,42 @@
-# SkyWatch-Radar
-CORE: 
-Tactical Global Flight Intelligence Platform • Open Source OSINT
+### Monitored Indicators
+* **Tactical Callsign Matches:** Instant tracking vectors for priority prefixes including `FORTE`, `RCH`, `REACH`, `NATO`, `ASCOT`, `SHUCK`, `HKY`, and `DUKE`.
+* **Spatial Airbase Tracking:** Intersects flight paths initiating from military airbases or restricted tactical zones.
+* **Flight Geometry Ingestion:** Analyzes flight profiles for distinctive operational signatures like continuous orbit tracks (typical of aerial refueling tankers and AWACS assets).
 
-A production-grade, real-time worldwide tactical flight intelligence platform designed for high-performance
+---
 
-geospatial monitoring. Built with a client-first architecture using GPU-accelerated rendering and a military-
-inspired design language.
+## 🎛 Application Modes & Map Overlays
 
-1. CORE TECH STACK
+SkyWatch Radar features a unified visual ecosystem with three fluid operational configurations:
 
-Frontend & Viz
-Engine: React + TypeScript + Vite
-3D Globe: OpenGlobus (GPU)
-2D Maps: MapLibre GL JS
-Layers: deck.gl (High-density GPU)
-UI: Tailwind CSS + Framer Motion
+### 1. Unified Operating Modes
+* **3D Globe Mode:** Global strategic awareness map built with `OpenGlobus`.
+* **2D Tactical Mode:** High-precision map projection utilizing flat `MapLibre` vectors.
+* **Split View Mode:** Synchronized side-by-side display for simultaneous broad tracking and target-specific visual analysis.
 
-Infrastructure
-Edge Compute: Cloudflare Workers
-Persistence: IndexedDB (Dexie.js)
-State: Zustand + TanStack Query
-Spatial: RBush / kdbush
+### 2. Deep Structural Map Overlays
+* **Airspace Ingestion Engine:** Automated parsing architectures for Flight Information Regions (FIR), restricted target ranges, and danger areas.
+* **Airfield Graphics:** Renders control towers, precision runway vectors, and localized traffic flow loops.
+* **Environmental Assets:** Dynamic weather overlays, barometric pressure models, and cloud-density tracking maps.
 
-2. SYSTEM ARCHITECTURE
-The platform adheres to a modular, service-oriented architecture ensuring provider-agnostic data flow.
+---
 
-3. PERFORMANCE OPTIMIZATIONS
-Multithreading: All aircraft filtering, military classification, and trail geometry processing are handled in Web
-Workers to prevent UI jank.
-Spatial Indexing: Real-time viewport querying using RBush for O(log n) aircraft lookups.
-Adaptive LOD: Global Dots only. Regional 2D Icons + Labels. Close-up Full glTF 3D Aircraft Models.
-GPU Batching: Thousands of instances rendered in a single draw call via deck.gl.
-•
-•
-•
-•
-•
+## 🎨 Design System & UI Components
 
-•
-•
-•
-•
+The visual layer is engineered as a clean, low-fatigue layout inspired by real-world defense operations rooms. **Oversaturated cyberpunk neon themes are strictly excluded.**
 
-src/
-├── app/ # Core providers & global wrappers
-├── components/ # Atomic UI (Shadcn-like tactical components)
-├── features/ # Logic for Aircraft, Airports, Weather
-├── services/ # Abstracted API layers (ADSB-Hub, GeoData)
-├── workers/ # Off-thread processing (Spatial indexing, Filtering)
-├── layers/ # deck.gl & OpenGlobus custom layer definitions
-└── stores/ # Zustand state slices (UI, Map, FlightData)
+* **Surfaces:** Dark matte background blocks complemented by sleek glassmorphism dashboard side panels (`backdrop-blur`).
+* **Accents:** Subtle tactical grids, soft indicators, low-saturation threat profiles, and smooth radar sweep sweeps across active target groups.
+* **Desktop Layout:** Comprehensive control layout featuring dual sidebars, a flight telemetry tracker, active search command bars, and a diagnostic minimap.
+* **Mobile/Tablet Layout:** Gesture-optimized, responsive viewports equipped with collapsible control tabs and thumb-friendly interaction clusters.
 
-•
+---
 
-•
-•
-•
+## 💾 Caching Strategy & Low-Cost Infrastructure
 
-Tactical Military Heuristics
-The system uses an autonomous scoring engine to identify non-civilian assets based on:
-Known ICAO hex blocks (RCAF, USAF, RAF).
-Callsign pattern matching (e.g., FORTE , RCH , LAGR ).
-Behavioral analysis: Orbiting patterns (Tankers/AWACS) and airbase departure correlation.
+The platform is designed to operate seamlessly on entirely free or budget edge tiers without running up database or server costs.
 
-4. APPLICATION MODES
-3D Strategic: Global situational awareness using OpenGlobus.
-2D Tactical: High-precision vector mapping for dense airspace.
-Split-Intelligence: Synchronized dual-view for simultaneous broad/local monitoring.
-5. DEPLOYMENT & COST
-Engineered for Zero-Cost Scalability:
-Hosting: Cloudflare Pages (Free Tier).
-API Proxy: Cloudflare Workers (Edge Caching).
-Maps: OpenFreeMap / MapTiler (Free Tier).
-Data: Airplanes.live / OpenSky Network integration.
+* **Edge Compute Layer:** A Cloudflare Worker proxy manages third-party aircraft feeds, aggregates disparate data payloads, and handles high-speed caching with a custom `stale-while-revalidate` caching header template.
+* **Local Buffer Layer:** Flight trails and metadata are managed locally through `Dexie.js` in client-side IndexedDB, bypassing the need for an expensive centralized geospatial database until enterprise expansion is required.
+
+---
