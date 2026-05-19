@@ -80,6 +80,8 @@ export interface Aircraft {
   typeCode: string;
   description: string;
   operator: string;
+  origin?: string;
+  destination?: string;
 
   // Position
   lat: number;

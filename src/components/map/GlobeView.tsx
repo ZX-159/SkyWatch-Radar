@@ -45,14 +45,19 @@ export function GlobeView({ className = '' }: GlobeViewProps) {
     globe.planet.events.on('draw', () => {
       const cam = globe.planet.camera;
       const lonlat = cam.getLonLat();
-      const height = cam.getEye().length();
+      const height = cam.eye.length();
       const zoom = Math.log2(40075016 / (height / 256));
 
-      setViewState({
-        longitude: lonlat.lon,
-        latitude: lonlat.lat,
-        zoom: Math.max(1, Math.min(18, zoom)),
-      });
+      // Use a more conservative update to avoid feedback loops or excessive re-renders
+      const { viewState: current } = useMapStore.getState();
+      if (Math.abs(current.longitude - lonlat.lon) > 0.0001 ||
+          Math.abs(current.latitude - lonlat.lat) > 0.0001) {
+        setViewState({
+          longitude: lonlat.lon,
+          latitude: lonlat.lat,
+          zoom: Math.max(1, Math.min(18, zoom)),
+        });
+      }
     });
 
     vectors.events.on('ldown', (e: any) => {
@@ -80,7 +85,7 @@ export function GlobeView({ className = '' }: GlobeViewProps) {
 
     for (const [hex, entity] of entitiesRef.current.entries()) {
       if (!currentHexes.has(hex)) {
-        vectors.removeEntity(entity);
+        vectors.remove(entity);
         entitiesRef.current.delete(hex);
       }
     }
@@ -101,7 +106,7 @@ export function GlobeView({ className = '' }: GlobeViewProps) {
           },
           properties: { hex: ac.hex }
         });
-        vectors.addEntity(entity);
+        vectors.add(entity);
         entitiesRef.current.set(ac.hex, entity);
       } else {
         entity.setLonLat(new og.LonLat(ac.lon, ac.lat, ac.altitude * 0.3048));
@@ -117,7 +122,7 @@ export function GlobeView({ className = '' }: GlobeViewProps) {
 
     if (Math.abs(current.lon - viewState.longitude) > 0.001 ||
         Math.abs(current.lat - viewState.latitude) > 0.001) {
-      cam.setLonLat(new og.LonLat(viewState.longitude, viewState.latitude, cam.getEye().length()));
+      cam.setLonLat(new og.LonLat(viewState.longitude, viewState.latitude, cam.eye.length()));
     }
   }, [viewState.longitude, viewState.latitude, globeReady]);
 

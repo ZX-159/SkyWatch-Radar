@@ -3,6 +3,7 @@ import { subscribeWithSelector } from 'zustand/middleware';
 import type { Aircraft, AircraftFilter } from '../types/aircraft';
 import { transformAircraft } from '../utils/aircraftTransform';
 import { aircraftService } from '../services/aircraftService';
+import { useMapStore } from './mapStore';
 import { db } from '../services/db';
 import Fuse from 'fuse.js';
 
@@ -129,13 +130,27 @@ export const useAircraftStore = create<AircraftStoreState>()(
       const { aircraft: currentMap, filter } = get();
       const updatedMap = new Map(currentMap);
 
+      // Identify which aircraft are new and might need trail recovery
+      const newHexes = rawList
+        .filter(raw => raw.hex && !updatedMap.has(raw.hex))
+        .map(raw => raw.hex!);
+
+      // Bulk fetch saved trails for new aircraft to improve performance
+      const savedTrailsMap = new Map<string, any>();
+      if (newHexes.length > 0) {
+        const savedTrails = await db.trails.bulkGet(newHexes);
+        savedTrails.forEach(trail => {
+          if (trail) savedTrailsMap.set(trail.hex, trail);
+        });
+      }
+
       for (const raw of rawList) {
         if (!raw.hex) continue;
 
         let existing = updatedMap.get(raw.hex);
 
         if (!existing) {
-          const saved = await db.trails.get(raw.hex);
+          const saved = savedTrailsMap.get(raw.hex);
           if (saved) {
              existing = { trail: saved.points, firstSeen: saved.lastUpdate } as any;
           }
@@ -231,7 +246,8 @@ export const useAircraftStore = create<AircraftStoreState>()(
       const fetchCycle = async () => {
         if (!active) return;
 
-        const { isMilitaryMode, fetchRegion, viewState } = get();
+        const { isMilitaryMode, fetchRegion } = get();
+        const { viewState } = useMapStore.getState();
         get().setLoading(true);
 
         try {

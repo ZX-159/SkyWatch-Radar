@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Plane, Navigation, Gauge, TrendingUp,
   Shield, Clock, Target,
-  ChevronDown, ChevronUp
+  ChevronDown, ChevronUp, ChevronRight
 } from 'lucide-react';
 import { useAircraftStore } from '../../stores/aircraftStore';
 import { useMapStore } from '../../stores/mapStore';

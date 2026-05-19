@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useAircraftStore } from '../../stores/aircraftStore';
@@ -158,11 +158,7 @@ export function TacticalMap({ className = '' }: TacticalMapProps) {
           'icon-rotation-alignment': 'map',
           'icon-allow-overlap': true,
           'icon-ignore-placement': true,
-          'text-field': [
-            'case',
-            ['>', ['zoom'], 7], ['get', 'label'],
-            ''
-          ],
+          'text-field': ['step', ['zoom'], '', 7, ['get', 'label']],
           'text-size': 10,
           'text-offset': [0, 2],
           'text-anchor': 'top',
