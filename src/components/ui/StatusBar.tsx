@@ -1,4 +1,3 @@
-import React from 'react';
 import { useAircraftStore } from '../../stores/aircraftStore';
 import { useMapStore } from '../../stores/mapStore';
 
@@ -73,7 +72,7 @@ export function StatusBar() {
       )}
 
       {/* System label */}
-      <span className="text-xs font-mono text-slate-700">SKYWATCH-RADAR v1.1</span>
+      <span className="text-xs font-mono text-slate-700">SKYVEIL v1.0</span>
     </div>
   );
 }

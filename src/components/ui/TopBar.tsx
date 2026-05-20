@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Layers, Filter, Maximize2, Minimize2,
@@ -12,7 +12,7 @@ import type { ViewMode, BaseLayer } from '../../types/map';
 const VIEW_MODES: { id: ViewMode; icon: React.ReactNode; label: string }[] = [
   { id: '2d-map', icon: <Map size={14} />, label: '2D MAP' },
   { id: '3d-globe', icon: <Globe size={14} />, label: '3D GLOBE' },
-  { id: 'split-view', icon: <SplitSquareHorizontal size={14} />, label: 'SPLIT' },
+  { id: 'split', icon: <SplitSquareHorizontal size={14} />, label: 'SPLIT' },
 ];
 
 const BASE_LAYERS: { id: BaseLayer; label: string }[] = [
@@ -83,7 +83,7 @@ export function TopBar() {
             )}
           </div>
           <div className="hidden sm:block">
-            <div className="text-xs font-bold text-white tracking-widest leading-none">SKYWATCH-RADAR</div>
+            <div className="text-xs font-bold text-white tracking-widest leading-none">SKYVEIL</div>
             <div className="text-xs text-sky-400/70 font-mono tracking-wider leading-none">TACTICAL</div>
           </div>
         </div>

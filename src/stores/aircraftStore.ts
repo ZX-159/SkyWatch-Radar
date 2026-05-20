@@ -3,8 +3,6 @@ import { subscribeWithSelector } from 'zustand/middleware';
 import type { Aircraft, AircraftFilter } from '../types/aircraft';
 import { transformAircraft } from '../utils/aircraftTransform';
 import { aircraftService } from '../services/aircraftService';
-import { useMapStore } from './mapStore';
-import { db } from '../services/db';
 import Fuse from 'fuse.js';
 
 interface AircraftStoreState {
@@ -64,7 +62,9 @@ function applyFilters(aircraft: Aircraft[], filter: AircraftFilter): Aircraft[] 
 
   if (filter.militaryOnly) {
     result = result.filter(a => a.isMilitary);
-  } else if (filter.militaryConfidence !== 'all') {
+  }
+
+  if (filter.militaryConfidence !== 'all') {
     result = result.filter(a => a.militaryConfidence === filter.militaryConfidence);
   }
 
@@ -126,47 +126,16 @@ export const useAircraftStore = create<AircraftStoreState>()(
     fetchRegion: null,
     isMilitaryMode: true,
 
-    updateAircraft: async (rawList, now = Date.now()) => {
+    updateAircraft: (rawList, now = Date.now()) => {
       const { aircraft: currentMap, filter } = get();
       const updatedMap = new Map(currentMap);
 
-      // Identify which aircraft are new and might need trail recovery
-      const newHexes = rawList
-        .filter(raw => raw.hex && !updatedMap.has(raw.hex))
-        .map(raw => raw.hex!);
-
-      // Bulk fetch saved trails for new aircraft to improve performance
-      const savedTrailsMap = new Map<string, any>();
-      if (newHexes.length > 0) {
-        const savedTrails = await db.trails.bulkGet(newHexes);
-        savedTrails.forEach(trail => {
-          if (trail) savedTrailsMap.set(trail.hex, trail);
-        });
-      }
-
       for (const raw of rawList) {
         if (!raw.hex) continue;
-
-        let existing = updatedMap.get(raw.hex);
-
-        if (!existing) {
-          const saved = savedTrailsMap.get(raw.hex);
-          if (saved) {
-             existing = { trail: saved.points, firstSeen: saved.lastUpdate } as any;
-          }
-        }
-
+        const existing = updatedMap.get(raw.hex);
         const transformed = transformAircraft(raw, existing, now);
         if (transformed) {
           updatedMap.set(raw.hex, transformed);
-
-          if (transformed.trail.length > 0) {
-            db.trails.put({
-              hex: transformed.hex,
-              points: transformed.trail,
-              lastUpdate: now
-            });
-          }
         }
       }
 
@@ -247,27 +216,23 @@ export const useAircraftStore = create<AircraftStoreState>()(
         if (!active) return;
 
         const { isMilitaryMode, fetchRegion } = get();
-        const { viewState } = useMapStore.getState();
         get().setLoading(true);
 
         try {
           let rawAircraft;
 
           if (isMilitaryMode) {
+            // Fetch global military aircraft
             rawAircraft = await aircraftService.fetchMilitary();
           } else if (fetchRegion) {
+            // Fetch regional data
             rawAircraft = await aircraftService.fetchByBounds(
               fetchRegion.lat, fetchRegion.lon, fetchRegion.radius
             );
           } else {
-            const radius = Math.min(250, Math.max(50, 500 / Math.pow(2, viewState.zoom - 4)));
-            rawAircraft = await aircraftService.fetchByBounds(viewState.latitude, viewState.longitude, radius);
-
-            if (fetchCount % 5 === 0) {
-               const region = REGION_CENTERS[(fetchCount / 5) % REGION_CENTERS.length];
-               const extraAircraft = await aircraftService.fetchByBounds(region.lat, region.lon, region.radius);
-               rawAircraft = [...rawAircraft, ...extraAircraft];
-            }
+            // Cycle through regions to get broad coverage
+            const region = REGION_CENTERS[fetchCount % REGION_CENTERS.length];
+            rawAircraft = await aircraftService.fetchByBounds(region.lat, region.lon, region.radius);
             fetchCount++;
           }
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useAircraftStore } from '../../stores/aircraftStore';
 import { getMilitaryConfidenceColor } from '../../utils/militaryDetection';

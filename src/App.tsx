@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TacticalMap } from './components/map/TacticalMap';
-import { GlobeView } from './components/map/GlobeView';
 import { TopBar } from './components/ui/TopBar';
 import { AircraftInfoPanel } from './components/ui/AircraftInfoPanel';
 import { AircraftListPanel } from './components/ui/AircraftListPanel';
@@ -24,7 +23,7 @@ const queryClient = new QueryClient({
 });
 
 function TacticalPlatform() {
-  const { panels, togglePanel, viewMode } = useMapStore();
+  const { panels, togglePanel } = useMapStore();
   const [listVisible, setListVisible] = useState(false);
 
   // Start aircraft data feed
@@ -39,16 +38,7 @@ function TacticalPlatform() {
       style={{ background: '#0a0e1a', fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif" }}
     >
       {/* Primary map view */}
-      <div className="absolute inset-0">
-        {viewMode === '2d-map' && <TacticalMap className="w-full h-full" />}
-        {viewMode === '3d-globe' && <GlobeView className="w-full h-full" />}
-        {viewMode === 'split-view' && (
-          <div className="flex w-full h-full">
-            <TacticalMap className="flex-1 border-r border-sky-500/20" />
-            <GlobeView className="flex-1" />
-          </div>
-        )}
-      </div>
+      <TacticalMap className="absolute inset-0" />
 
       {/* Top status bar (52px high) */}
       <TopBar />
@@ -83,26 +73,20 @@ function TacticalPlatform() {
         </div>
       </div>
 
-      {/* Right side panels container */}
-      <div className="absolute top-16 right-4 bottom-8 pointer-events-none flex flex-col items-end gap-4 z-30">
-        <div className="pointer-events-auto">
-          <AircraftInfoPanel />
-        </div>
+      {/* Aircraft info panel - right side */}
+      <AircraftInfoPanel />
 
-        <div className="pointer-events-auto">
-          <LayerManagerPanel
-            visible={layerPanel?.visible ?? false}
-            onClose={() => togglePanel('layer-manager')}
-          />
-        </div>
+      {/* Layer manager panel */}
+      <LayerManagerPanel
+        visible={layerPanel?.visible ?? false}
+        onClose={() => togglePanel('layer-manager')}
+      />
 
-        <div className="pointer-events-auto">
-          <FilterPanel
-            visible={filterPanel?.visible ?? false}
-            onClose={() => togglePanel('filter')}
-          />
-        </div>
-      </div>
+      {/* Filter panel */}
+      <FilterPanel
+        visible={filterPanel?.visible ?? false}
+        onClose={() => togglePanel('filter')}
+      />
 
       {/* Boot overlay */}
       <BootSequence />
@@ -175,7 +159,7 @@ function BootSequence() {
               </div>
             </div>
 
-            <h1 className="text-3xl font-bold tracking-[0.4em] text-white mb-1">SKYWATCH-RADAR</h1>
+            <h1 className="text-3xl font-bold tracking-[0.4em] text-white mb-1">SKYVEIL</h1>
             <p className="text-sm font-mono tracking-widest text-sky-400/70">TACTICAL FLIGHT INTELLIGENCE</p>
           </motion.div>
 

@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Plane, Navigation, Gauge, TrendingUp,
   Shield, Clock, Target,
-  ChevronDown, ChevronUp, ChevronRight
+  ChevronDown, ChevronUp
 } from 'lucide-react';
 import { useAircraftStore } from '../../stores/aircraftStore';
 import { useMapStore } from '../../stores/mapStore';
@@ -54,8 +54,8 @@ export function AircraftInfoPanel() {
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: 320, opacity: 0 }}
           transition={{ type: 'spring' as const, damping: 25, stiffness: 200 }}
-          className="w-80"
-          style={{ maxHeight: '60vh' }}
+          className="absolute top-16 right-4 w-80 z-30"
+          style={{ maxHeight: 'calc(100vh - 120px)' }}
         >
           <div className="rounded-xl overflow-hidden shadow-2xl"
             style={{
@@ -115,23 +115,6 @@ export function AircraftInfoPanel() {
                 </div>
               </div>
             </div>
-
-            {/* Route Information */}
-            {(ac.origin || ac.destination) && (
-              <div className="px-4 py-2 border-b border-white/5 bg-sky-500/5">
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <span className="text-[10px] text-slate-500 font-mono uppercase">Origin</span>
-                    <span className="text-xs font-bold text-sky-400 font-mono">{ac.origin || 'UNKNOWN'}</span>
-                  </div>
-                  <ChevronRight size={12} className="text-slate-600" />
-                  <div className="flex flex-col text-right">
-                    <span className="text-[10px] text-slate-500 font-mono uppercase">Destination</span>
-                    <span className="text-xs font-bold text-sky-400 font-mono">{ac.destination || 'UNKNOWN'}</span>
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* Telemetry Grid */}
             <div className="p-4 grid grid-cols-2 gap-3">

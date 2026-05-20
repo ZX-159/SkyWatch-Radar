@@ -1,4 +1,4 @@
-export type ViewMode = '3d-globe' | '2d-map' | 'split-view';
+export type ViewMode = '3d-globe' | '2d-map' | 'split';
 
 export type BaseLayer =
   | 'dark'

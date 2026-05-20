@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, Shield, ArrowUp, ArrowDown, Minus } from 'lucide-react';
 import { useAircraftStore } from '../../stores/aircraftStore';

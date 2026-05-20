@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { List, Layers, Filter, BarChart2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
