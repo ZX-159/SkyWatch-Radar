@@ -86,17 +86,33 @@ export const useMapStore = create<MapStoreState>()(
       )
     })),
 
-    togglePanel: (id) => set(s => ({
-      panels: s.panels.map(p =>
-        p.id === id ? { ...p, visible: !p.visible } : p
-      )
-    })),
+    togglePanel: (id) => set(s => {
+      const isSidePanel = ['layer-manager', 'filter', 'settings', 'radar'].includes(id);
+      return {
+        panels: s.panels.map(p => {
+          if (p.id === id) return { ...p, visible: !p.visible };
+          // If opening a side panel, close others (exclusive)
+          if (isSidePanel && !p.pinned && ['layer-manager', 'filter', 'settings', 'radar'].includes(p.id)) {
+             return { ...p, visible: false };
+          }
+          return p;
+        })
+      };
+    }),
 
-    setPanelVisible: (id, visible) => set(s => ({
-      panels: s.panels.map(p =>
-        p.id === id ? { ...p, visible } : p
-      )
-    })),
+    setPanelVisible: (id, visible) => set(s => {
+      const isSidePanel = ['layer-manager', 'filter', 'settings', 'radar'].includes(id);
+      return {
+        panels: s.panels.map(p => {
+          if (p.id === id) return { ...p, visible };
+          // If opening a side panel, close others
+          if (visible && isSidePanel && !p.pinned && ['layer-manager', 'filter', 'settings', 'radar'].includes(p.id)) {
+            return { ...p, visible: false };
+          }
+          return p;
+        })
+      };
+    }),
 
     toggleFullscreen: () => set(s => ({ isFullscreen: !s.isFullscreen })),
     toggleMinimap: () => set(s => ({ showMinimap: !s.showMinimap })),

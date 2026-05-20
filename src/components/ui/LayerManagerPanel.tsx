@@ -1,3 +1,4 @@
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Layers, Eye, EyeOff } from 'lucide-react';
 import { useMapStore } from '../../stores/mapStore';
@@ -35,7 +36,7 @@ export function LayerManagerPanel({ visible, onClose }: LayerManagerPanelProps) 
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: -10 }}
           transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-          className="absolute right-4 top-16 w-64 z-30"
+          className="w-64"
         >
           <div className="rounded-xl overflow-hidden"
             style={{

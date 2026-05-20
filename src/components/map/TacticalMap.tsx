@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useAircraftStore } from '../../stores/aircraftStore';
@@ -6,9 +6,12 @@ import { useMapStore } from '../../stores/mapStore';
 import { getMapStyleUrl } from '../../utils/mapStyles';
 import { getMilitaryConfidenceColor } from '../../utils/militaryDetection';
 import { getAltitudeColor } from '../../utils/aircraftTransform';
+import { airportService } from '../../services/airportService';
 
 const AIRCRAFT_SOURCE = 'aircraft-positions';
 const TRAIL_SOURCE = 'aircraft-trails';
+const AIRPORT_SOURCE = 'airports';
+const WEATHER_SOURCE = 'weather';
 
 function createAircraftSVG(color: string, size: number = 32): string {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 32 32">
@@ -30,11 +33,80 @@ export function TacticalMap({ className = '' }: TacticalMapProps) {
   const iconsLoadedRef = useRef(false);
 
   const { filteredAircraft, selectedHex, selectAircraft } = useAircraftStore();
-  const { baseLayer, viewState, setViewState, setMapLoaded, setPanelVisible } = useMapStore();
+  const { baseLayer, viewState, overlayLayers, setViewState, setMapLoaded, setPanelVisible } = useMapStore();
 
   const styleUrl = getMapStyleUrl(baseLayer);
 
   const initializeSources = useCallback((map: maplibregl.Map) => {
+    // Weather radar source (RainViewer)
+    if (!map.getSource(WEATHER_SOURCE)) {
+      map.addSource(WEATHER_SOURCE, {
+        type: 'raster',
+        tiles: [
+          'https://tilecache.rainviewer.com/v2/radar/nowcast_10/256/{z}/{x}/{y}/2/1_1.png'
+        ],
+        tileSize: 256,
+      });
+
+      map.addLayer({
+        id: 'weather-radar',
+        type: 'raster',
+        source: WEATHER_SOURCE,
+        paint: {
+          'raster-opacity': 0.6,
+          'raster-fade-duration': 300,
+        },
+        layout: {
+          visibility: 'none',
+        },
+      });
+    }
+
+    // Airports source
+    if (!map.getSource(AIRPORT_SOURCE)) {
+      map.addSource(AIRPORT_SOURCE, {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] },
+      });
+
+      map.addLayer({
+        id: 'airport-layer',
+        type: 'circle',
+        source: AIRPORT_SOURCE,
+        minzoom: 5,
+        paint: {
+          'circle-radius': [
+            'interpolate', ['linear'], ['zoom'],
+            5, 2,
+            10, 5,
+            15, 8
+          ],
+          'circle-color': '#ffffff',
+          'circle-stroke-width': 1,
+          'circle-stroke-color': '#0ea5e9',
+          'circle-opacity': 0.8,
+        },
+      });
+
+      map.addLayer({
+        id: 'airport-labels',
+        type: 'symbol',
+        source: AIRPORT_SOURCE,
+        minzoom: 6,
+        layout: {
+          'text-field': '{icao}',
+          'text-size': 10,
+          'text-offset': [0, 1.5],
+          'text-anchor': 'top',
+        },
+        paint: {
+          'text-color': '#ffffff',
+          'text-halo-color': 'rgba(0,0,0,0.8)',
+          'text-halo-width': 1,
+        },
+      });
+    }
+
     // Aircraft positions source
     if (!map.getSource(AIRCRAFT_SOURCE)) {
       map.addSource(AIRCRAFT_SOURCE, {
@@ -90,17 +162,12 @@ export function TacticalMap({ className = '' }: TacticalMapProps) {
           'icon-rotation-alignment': 'map',
           'icon-allow-overlap': true,
           'icon-ignore-placement': true,
-          'text-field': [
-            'case',
-            ['>', ['zoom'], 7], ['get', 'label'],
-            ''
-          ],
+          'text-field': '{label}',
           'text-size': 10,
           'text-offset': [0, 2],
           'text-anchor': 'top',
           'text-allow-overlap': false,
           'text-optional': true,
-          'text-font': ['Open Sans Regular', 'Arial Unicode MS Regular'],
         },
         paint: {
           'text-color': '#cbd5e1',
@@ -236,13 +303,14 @@ export function TacticalMap({ className = '' }: TacticalMapProps) {
     });
 
     map.on('move', () => {
-      const center = map.getCenter();
+      if (!mapRef.current) return;
+      const center = mapRef.current.getCenter();
       setViewState({
         longitude: center.lng,
         latitude: center.lat,
-        zoom: map.getZoom(),
-        pitch: map.getPitch(),
-        bearing: map.getBearing(),
+        zoom: mapRef.current.getZoom(),
+        pitch: mapRef.current.getPitch(),
+        bearing: mapRef.current.getBearing(),
       });
     });
 
@@ -351,10 +419,51 @@ export function TacticalMap({ className = '' }: TacticalMapProps) {
     trailSource.setData({ type: 'FeatureCollection', features: trailFeatures });
   }, []);
 
+  // Load airport data
+  useEffect(() => {
+    if (!mapReady) return;
+    const loadAirports = async () => {
+      const airports = await airportService.fetchAirports();
+      const map = mapRef.current;
+      if (!map) return;
+      const airportSource = map.getSource(AIRPORT_SOURCE) as maplibregl.GeoJSONSource;
+      if (airportSource) {
+        airportSource.setData({
+          type: 'FeatureCollection',
+          features: airports.map(a => ({
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [a.lon, a.lat] },
+            properties: { icao: a.icao, name: a.name }
+          }))
+        });
+      }
+    };
+    loadAirports();
+  }, [mapReady]);
+
   useEffect(() => {
     if (!mapReady) return;
     updateLayers();
-  }, [filteredAircraft, selectedHex, mapReady, updateLayers]);
+  }, [filteredAircraft, selectedHex, mapReady, updateLayers, overlayLayers]);
+
+  // Handle layer visibility
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady) return;
+
+    overlayLayers.forEach(layer => {
+      let layerId = '';
+      if (layer.id === 'weather') layerId = 'weather-radar';
+      if (layer.id === 'airports') layerId = 'airport-layer';
+
+      if (layerId && map.getLayer(layerId)) {
+        map.setLayoutProperty(layerId, 'visibility', layer.enabled ? 'visible' : 'none');
+        if (layer.id === 'airports' && map.getLayer('airport-labels')) {
+           map.setLayoutProperty('airport-labels', 'visibility', layer.enabled ? 'visible' : 'none');
+        }
+      }
+    });
+  }, [overlayLayers, mapReady]);
 
   // Fly to selected aircraft
   useEffect(() => {

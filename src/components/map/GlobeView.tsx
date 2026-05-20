@@ -25,13 +25,12 @@ export function GlobeView({ className = '' }: GlobeViewProps) {
       isBaseLayer: true,
       url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
       visibility: true,
-      attribution: 'Data @ OpenStreetMap contributors, ODbL',
+      attribution: '© OpenStreetMap contributors',
     });
 
     const globe = new og.Globe({
       target: containerRef.current,
       name: 'Earth',
-      terrain: new og.terrain.GlobusTerrain(),
       layers: [osm],
       autoActivate: true,
     });
