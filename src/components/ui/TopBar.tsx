@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Layers, Filter, Maximize2, Minimize2,
@@ -12,7 +12,7 @@ import type { ViewMode, BaseLayer } from '../../types/map';
 const VIEW_MODES: { id: ViewMode; icon: React.ReactNode; label: string }[] = [
   { id: '2d-map', icon: <Map size={14} />, label: '2D MAP' },
   { id: '3d-globe', icon: <Globe size={14} />, label: '3D GLOBE' },
-  { id: 'split', icon: <SplitSquareHorizontal size={14} />, label: 'SPLIT' },
+  { id: 'split-view', icon: <SplitSquareHorizontal size={14} />, label: 'SPLIT' },
 ];
 
 const BASE_LAYERS: { id: BaseLayer; label: string }[] = [
@@ -78,13 +78,13 @@ export function TopBar() {
               <Radio size={14} className="text-white" />
             </div>
             {showRadarSweep && (
-              <div className="absolute inset-0 rounded-lg animate-ping opacity-40"
+              <div className="absolute inset-0 rounded-lg animate-pulse opacity-40"
                 style={{ background: 'rgba(14, 165, 233, 0.5)' }} />
             )}
           </div>
           <div className="hidden sm:block">
-            <div className="text-xs font-bold text-white tracking-widest leading-none">SKYVEIL</div>
-            <div className="text-xs text-sky-400/70 font-mono tracking-wider leading-none">TACTICAL</div>
+            <div className="text-[11px] font-bold text-white tracking-[0.2em] leading-none">SKYWATCH-RADAR</div>
+            <div className="text-[9px] text-sky-400/60 font-mono tracking-[0.3em] leading-none mt-1">INTEL_GLOBAL</div>
           </div>
         </div>
 
@@ -98,7 +98,7 @@ export function TopBar() {
             <button
               key={mode.id}
               onClick={() => setViewMode(mode.id)}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-mono transition-all"
+              className="flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-mono transition-all"
               style={{
                 background: viewMode === mode.id ? 'rgba(14, 165, 233, 0.2)' : 'transparent',
                 color: viewMode === mode.id ? '#38bdf8' : '#64748b',
@@ -111,28 +111,24 @@ export function TopBar() {
           ))}
         </div>
 
-        {/* Spacer */}
-        <div className="flex-1" />
-
-        {/* Stats display */}
-        <div className="flex items-center gap-3 hidden md:flex">
-          <StatChip
-            label="TOTAL"
-            value={totalCount.toLocaleString()}
-            color="#38bdf8"
-            pulse={isLoading}
-          />
-          <StatChip
-            label="MILITARY"
-            value={militaryCount.toLocaleString()}
-            color="#ef4444"
-          />
-          <div className="text-xs font-mono text-slate-600">
-            {lastUpdateStr}
+        {/* Stats display - Centered more balanced */}
+        <div className="flex-1 flex justify-center">
+          <div className="flex items-center gap-6">
+            <StatChip
+              label="TOTAL"
+              value={totalCount.toLocaleString()}
+              color="#38bdf8"
+              pulse={isLoading}
+            />
+            <StatChip
+              label="MILITARY"
+              value={militaryCount.toLocaleString()}
+              color="#ef4444"
+            />
+            <div className="text-[10px] font-mono text-slate-500 hidden lg:block">
+              SYS_TIME: {lastUpdateStr}
+            </div>
           </div>
-          {error && (
-            <div className="text-xs text-amber-400 font-mono max-w-32 truncate">{error}</div>
-          )}
         </div>
 
         {/* Divider */}
@@ -255,7 +251,7 @@ export function TopBar() {
         {searchOpen && (
           <motion.div
             initial={{ opacity: 0, width: 0 }}
-            animate={{ opacity: 1, width: '280px' }}
+              animate={{ opacity: 1, width: '320px' }}
             exit={{ opacity: 0, width: 0 }}
             className="overflow-hidden flex-shrink-0"
             style={{ borderBottom: '1px solid rgba(14, 165, 233, 0.15)' }}
@@ -268,13 +264,13 @@ export function TopBar() {
                 type="text"
                 value={searchQuery}
                 onChange={e => handleSearch(e.target.value)}
-                placeholder="ICAO, callsign, reg, type..."
-                className="flex-1 bg-transparent text-sm text-slate-200 placeholder-slate-500 outline-none font-mono"
+                  placeholder="ICAO, Callsign, Reg, Airport..."
+                  className="flex-1 bg-transparent text-[11px] text-slate-200 placeholder-slate-500 outline-none font-mono"
                 onKeyDown={e => e.key === 'Escape' && setSearchOpen(false)}
               />
               {searchQuery && (
                 <button onClick={() => handleSearch('')} className="text-slate-500 hover:text-slate-300">
-                  <span className="text-xs">✕</span>
+                    <span className="text-[10px]">✕</span>
                 </button>
               )}
             </div>

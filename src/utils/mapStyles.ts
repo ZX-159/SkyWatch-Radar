@@ -2,23 +2,17 @@ import type { BaseLayer } from '../types/map';
 
 // Map style URLs from various free providers
 export function getMapStyleUrl(layer: BaseLayer): string {
-  switch (layer) {
-    case 'dark':
-      // OpenFreeMap - dark style
-      return 'https://tiles.openfreemap.org/styles/dark';
-    case 'light':
-      return 'https://tiles.openfreemap.org/styles/liberty';
-    case 'satellite':
-      // Use positron as fallback for satellite-like
-      return 'https://tiles.openfreemap.org/styles/positron';
-    case 'terrain':
-      return 'https://tiles.openfreemap.org/styles/fiord-color';
-    case 'tactical':
-      // Custom tactical dark style
-      return 'https://tiles.openfreemap.org/styles/dark';
-    default:
-      return 'https://tiles.openfreemap.org/styles/dark';
-  }
+  // Use Stadia Maps (requires no key for localhost usually) or fallback to reliable sources
+  const styleUrls: Record<BaseLayer, string> = {
+    dark: 'https://tiles.openfreemap.org/styles/dark',
+    light: 'https://tiles.openfreemap.org/styles/liberty',
+    satellite: 'https://tiles.openfreemap.org/styles/bright',
+    terrain: 'https://tiles.openfreemap.org/styles/fiord-color',
+    tactical: 'https://tiles.openfreemap.org/styles/dark',
+  };
+
+  // Fallback to demotiles if everything fails
+  return styleUrls[layer] || 'https://demotiles.maplibre.org/style.json';
 }
 
 // Custom tactical overlay style additions

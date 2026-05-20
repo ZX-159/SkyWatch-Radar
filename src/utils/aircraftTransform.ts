@@ -52,6 +52,8 @@ export function transformAircraft(
     typeCode: raw.t || '',
     description: raw.desc || '',
     operator: raw.ownOp || '',
+    origin: (raw as any).origin,
+    destination: (raw as any).dest,
 
     lat: raw.lat,
     lon: raw.lon,

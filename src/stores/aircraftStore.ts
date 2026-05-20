@@ -3,6 +3,8 @@ import { subscribeWithSelector } from 'zustand/middleware';
 import type { Aircraft, AircraftFilter } from '../types/aircraft';
 import { transformAircraft } from '../utils/aircraftTransform';
 import { aircraftService } from '../services/aircraftService';
+import { useMapStore } from './mapStore';
+import { db } from '../services/db';
 import Fuse from 'fuse.js';
 
 interface AircraftStoreState {
@@ -62,9 +64,7 @@ function applyFilters(aircraft: Aircraft[], filter: AircraftFilter): Aircraft[] 
 
   if (filter.militaryOnly) {
     result = result.filter(a => a.isMilitary);
-  }
-
-  if (filter.militaryConfidence !== 'all') {
+  } else if (filter.militaryConfidence !== 'all') {
     result = result.filter(a => a.militaryConfidence === filter.militaryConfidence);
   }
 
@@ -126,16 +126,47 @@ export const useAircraftStore = create<AircraftStoreState>()(
     fetchRegion: null,
     isMilitaryMode: true,
 
-    updateAircraft: (rawList, now = Date.now()) => {
+    updateAircraft: async (rawList, now = Date.now()) => {
       const { aircraft: currentMap, filter } = get();
       const updatedMap = new Map(currentMap);
 
+      // Identify which aircraft are new and might need trail recovery
+      const newHexes = rawList
+        .filter(raw => raw.hex && !updatedMap.has(raw.hex))
+        .map(raw => raw.hex!);
+
+      // Bulk fetch saved trails for new aircraft to improve performance
+      const savedTrailsMap = new Map<string, any>();
+      if (newHexes.length > 0) {
+        const savedTrails = await db.trails.bulkGet(newHexes);
+        savedTrails.forEach(trail => {
+          if (trail) savedTrailsMap.set(trail.hex, trail);
+        });
+      }
+
       for (const raw of rawList) {
         if (!raw.hex) continue;
-        const existing = updatedMap.get(raw.hex);
+
+        let existing = updatedMap.get(raw.hex);
+
+        if (!existing) {
+          const saved = savedTrailsMap.get(raw.hex);
+          if (saved) {
+             existing = { trail: saved.points, firstSeen: saved.lastUpdate } as any;
+          }
+        }
+
         const transformed = transformAircraft(raw, existing, now);
         if (transformed) {
           updatedMap.set(raw.hex, transformed);
+
+          if (transformed.trail.length > 0) {
+            db.trails.put({
+              hex: transformed.hex,
+              points: transformed.trail,
+              lastUpdate: now
+            });
+          }
         }
       }
 
@@ -165,7 +196,13 @@ export const useAircraftStore = create<AircraftStoreState>()(
     selectAircraft: (hex) => set({ selectedHex: hex }),
     hoverAircraft: (hex) => set({ hoveredHex: hex }),
     setFetchRegion: (region) => set({ fetchRegion: region }),
-    setMilitaryMode: (enabled) => set({ isMilitaryMode: enabled }),
+    setMilitaryMode: (enabled) => {
+      set({ isMilitaryMode: enabled });
+      // Clear filters when switching modes to ensure all aircraft show
+      if (!enabled) {
+        get().setFilter({ militaryOnly: false, militaryConfidence: 'all' });
+      }
+    },
     setLoading: (loading) => set({ isLoading: loading }),
     setError: (error) => set({ error }),
     setProviderName: (name) => set({ providerName: name }),
@@ -210,29 +247,42 @@ export const useAircraftStore = create<AircraftStoreState>()(
         { lat: 25, lon: 55, radius: 250, name: 'Middle East' },
         { lat: -25, lon: 130, radius: 250, name: 'Australia' },
         { lat: 55, lon: 37, radius: 250, name: 'Russia/Eastern Europe' },
+        { lat: -15, lon: -60, radius: 250, name: 'South America' },
+        { lat: 0, lon: 20, radius: 250, name: 'Africa' },
       ];
 
       const fetchCycle = async () => {
         if (!active) return;
 
         const { isMilitaryMode, fetchRegion } = get();
+        const { viewState } = useMapStore.getState();
         get().setLoading(true);
 
         try {
-          let rawAircraft;
+          let rawAircraft: any[] = [];
 
           if (isMilitaryMode) {
-            // Fetch global military aircraft
             rawAircraft = await aircraftService.fetchMilitary();
           } else if (fetchRegion) {
-            // Fetch regional data
             rawAircraft = await aircraftService.fetchByBounds(
               fetchRegion.lat, fetchRegion.lon, fetchRegion.radius
             );
           } else {
-            // Cycle through regions to get broad coverage
+            // Adaptive radius based on zoom
+            const radius = Math.min(250, Math.max(50, 2000 / Math.pow(2, viewState.zoom - 1)));
+            const currentView = await aircraftService.fetchByBounds(viewState.latitude, viewState.longitude, radius);
+
+            // Background regional fetching for global presence
             const region = REGION_CENTERS[fetchCount % REGION_CENTERS.length];
-            rawAircraft = await aircraftService.fetchByBounds(region.lat, region.lon, region.radius);
+            const extraAircraft = await aircraftService.fetchByBounds(region.lat, region.lon, region.radius);
+
+            // Merge unique aircraft
+            const merged = new Map();
+            [...currentView, ...extraAircraft].forEach(ac => {
+              if (ac.hex) merged.set(ac.hex, ac);
+            });
+            rawAircraft = Array.from(merged.values());
+
             fetchCount++;
           }
 

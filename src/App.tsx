@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TacticalMap } from './components/map/TacticalMap';
+import { GlobeView } from './components/map/GlobeView';
 import { TopBar } from './components/ui/TopBar';
 import { AircraftInfoPanel } from './components/ui/AircraftInfoPanel';
 import { AircraftListPanel } from './components/ui/AircraftListPanel';
@@ -23,7 +24,7 @@ const queryClient = new QueryClient({
 });
 
 function TacticalPlatform() {
-  const { panels, togglePanel } = useMapStore();
+  const { panels, togglePanel, viewMode } = useMapStore();
   const [listVisible, setListVisible] = useState(false);
 
   // Start aircraft data feed
@@ -38,7 +39,26 @@ function TacticalPlatform() {
       style={{ background: '#0a0e1a', fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif" }}
     >
       {/* Primary map view */}
-      <TacticalMap className="absolute inset-0" />
+      <div className="absolute inset-0 z-0">
+        <AnimatePresence mode="wait">
+          {viewMode === '2d-map' && (
+            <motion.div key="2d" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full h-full">
+              <TacticalMap className="w-full h-full" />
+            </motion.div>
+          )}
+          {viewMode === '3d-globe' && (
+            <motion.div key="3d" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full h-full">
+              <GlobeView className="w-full h-full" />
+            </motion.div>
+          )}
+          {viewMode === 'split-view' && (
+            <motion.div key="split" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex w-full h-full">
+              <TacticalMap className="flex-1 border-r border-sky-500/20" />
+              <GlobeView className="flex-1" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       {/* Top status bar (52px high) */}
       <TopBar />
@@ -73,20 +93,23 @@ function TacticalPlatform() {
         </div>
       </div>
 
-      {/* Aircraft info panel - right side */}
-      <AircraftInfoPanel />
+      {/* Right side panels container - ensure they are properly stacked and not overlapping */}
+      <div className="absolute top-16 right-4 bottom-10 pointer-events-none flex flex-col items-end gap-4 z-30 overflow-hidden">
+        <div className="pointer-events-auto flex-shrink-0">
+          <AircraftInfoPanel />
+        </div>
 
-      {/* Layer manager panel */}
-      <LayerManagerPanel
-        visible={layerPanel?.visible ?? false}
-        onClose={() => togglePanel('layer-manager')}
-      />
-
-      {/* Filter panel */}
-      <FilterPanel
-        visible={filterPanel?.visible ?? false}
-        onClose={() => togglePanel('filter')}
-      />
+        <div className="pointer-events-auto flex-1 flex flex-col gap-4 overflow-hidden">
+          <LayerManagerPanel
+            visible={layerPanel?.visible ?? false}
+            onClose={() => togglePanel('layer-manager')}
+          />
+          <FilterPanel
+            visible={filterPanel?.visible ?? false}
+            onClose={() => togglePanel('filter')}
+          />
+        </div>
+      </div>
 
       {/* Boot overlay */}
       <BootSequence />
@@ -159,7 +182,7 @@ function BootSequence() {
               </div>
             </div>
 
-            <h1 className="text-3xl font-bold tracking-[0.4em] text-white mb-1">SKYVEIL</h1>
+            <h1 className="text-3xl font-bold tracking-[0.4em] text-white mb-1">SKYWATCH-RADAR</h1>
             <p className="text-sm font-mono tracking-widest text-sky-400/70">TACTICAL FLIGHT INTELLIGENCE</p>
           </motion.div>
 

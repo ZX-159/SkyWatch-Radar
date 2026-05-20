@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@openglobus/og": "^0.28.7",
     "@tanstack/react-query": "^5.100.9",
     "@types/chroma-js": "^3.1.2",
     "@types/maplibre-gl": "^1.13.2",

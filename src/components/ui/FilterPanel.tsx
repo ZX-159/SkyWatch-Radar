@@ -1,3 +1,4 @@
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Filter, RotateCcw } from 'lucide-react';
 import { useAircraftStore } from '../../stores/aircraftStore';
@@ -44,7 +45,7 @@ export function FilterPanel({ visible, onClose }: FilterPanelProps) {
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: 300 }}
           transition={{ type: 'spring', damping: 30, stiffness: 280 }}
-          className="absolute right-4 top-16 w-72 z-30"
+          className="w-72"
         >
           <div className="rounded-xl overflow-hidden"
             style={{
