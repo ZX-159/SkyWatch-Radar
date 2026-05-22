@@ -45,7 +45,7 @@ export function StatsOverlay() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.5 }}
-      className="flex flex-col gap-2"
+      className="absolute bottom-8 left-4 z-20 flex flex-col gap-2"
     >
       {/* Radar display */}
       <div

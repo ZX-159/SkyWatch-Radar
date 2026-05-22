@@ -218,11 +218,6 @@ export function TacticalMap({ className = '' }: TacticalMapProps) {
             12, 2.5
           ],
           'line-opacity': ['get', 'opacity'],
-          'line-dasharray': [
-            'case',
-            ['==', ['get', 'predicted'], true], ['literal', [2, 2]],
-            ['literal', [1, 0]]
-          ],
           'line-blur': 0.3,
         },
       }, 'aircraft-dots');
@@ -415,24 +410,6 @@ export function TacticalMap({ className = '' }: TacticalMapProps) {
             hex: ac.hex,
             color: isSelected ? '#38bdf8' : altColor,
             opacity: isSelected ? 0.85 : 0.35,
-            predicted: false,
-          },
-        });
-      }
-
-      // Predicted path for selected aircraft
-      if (isSelected && ac.plannedRoute && ac.plannedRoute.length >= 2) {
-        trailFeatures.push({
-          type: 'Feature',
-          geometry: {
-            type: 'LineString',
-            coordinates: ac.plannedRoute.map(p => [p.lon, p.lat]),
-          },
-          properties: {
-            hex: ac.hex,
-            color: '#38bdf8',
-            opacity: 0.5,
-            predicted: true,
           },
         });
       }

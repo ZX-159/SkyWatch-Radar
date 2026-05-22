@@ -62,13 +62,10 @@ export function AircraftInfoPanel() {
               background: 'rgba(10, 14, 26, 0.95)',
               border: '1px solid rgba(14, 165, 233, 0.2)',
               backdropFilter: 'blur(20px)',
-              maxHeight: 'calc(100vh - 120px)',
-              display: 'flex',
-              flexDirection: 'column'
             }}
           >
             {/* Header */}
-            <div className="relative p-4 pb-3 flex-shrink-0"
+            <div className="relative p-4 pb-3"
               style={{
                 background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.12), rgba(10, 14, 26, 0))',
                 borderBottom: '1px solid rgba(14, 165, 233, 0.15)',
@@ -121,7 +118,7 @@ export function AircraftInfoPanel() {
 
             {/* Route Information */}
             {(ac.origin || ac.destination) && (
-              <div className="px-4 py-2 border-b border-white/5 bg-sky-500/5 flex-shrink-0">
+              <div className="px-4 py-2 border-b border-white/5 bg-sky-500/5">
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col">
                     <span className="text-[10px] text-slate-500 font-mono uppercase">Origin</span>
@@ -136,8 +133,6 @@ export function AircraftInfoPanel() {
               </div>
             )}
 
-            {/* Content Area - Scrollable */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar">
             {/* Telemetry Grid */}
             <div className="p-4 grid grid-cols-2 gap-3">
               <TelemetryCard
@@ -260,7 +255,6 @@ export function AircraftInfoPanel() {
                 </motion.div>
               )}
             </AnimatePresence>
-            </div>
           </div>
         </motion.div>
       )}

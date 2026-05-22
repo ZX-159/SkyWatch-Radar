@@ -70,7 +70,6 @@ export interface TrailPoint {
   alt: number;
   ts: number;
   gs?: number;
-  isPredicted?: boolean;
 }
 
 export interface Aircraft {
@@ -109,9 +108,6 @@ export interface Aircraft {
   seenPos: number;
   rssi: number;
   messages: number;
-
-    // Route Info
-    plannedRoute?: TrailPoint[];
 
   // Classification
   category: AircraftCategory | '';

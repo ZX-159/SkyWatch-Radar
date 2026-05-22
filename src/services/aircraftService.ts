@@ -52,15 +52,8 @@ class AirplanesLiveProvider implements AircraftDataProvider {
   }
 
   async fetchAll(): Promise<RawAircraft[]> {
-    try {
-      // Fetch the global sample from airplanes.live
-      const data = await this.fetchWithRateLimit<AircraftAPIResponse>(`${this.baseUrl}/all`);
-      return data.ac || [];
-    } catch (err) {
-      console.error('[AirplanesLive] Failed to fetch all:', err);
-      // Fallback to military
-      return this.fetchMilitary();
-    }
+    // Fetch military aircraft as global sample
+    return this.fetchMilitary();
   }
 
   async fetchMilitary(): Promise<RawAircraft[]> {
@@ -125,12 +118,7 @@ class ADSBFiProvider implements AircraftDataProvider {
   }
 
   async fetchAll(): Promise<RawAircraft[]> {
-    try {
-      const data = await this.fetchWithRateLimit<AircraftAPIResponse>(`${this.baseUrl}/all`);
-      return data.ac || [];
-    } catch (err) {
-      return this.fetchMilitary();
-    }
+    return this.fetchMilitary();
   }
 
   async fetchMilitary(): Promise<RawAircraft[]> {

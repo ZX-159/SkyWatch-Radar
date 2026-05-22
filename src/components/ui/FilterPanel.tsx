@@ -18,10 +18,23 @@ const CONFIDENCE_OPTIONS: { value: MilitaryConfidence | 'all'; label: string; co
 ];
 
 export function FilterPanel({ visible, onClose }: FilterPanelProps) {
-  const { filter, setFilter, resetFilters } = useAircraftStore();
+  const { filter, setFilter } = useAircraftStore();
 
   const handleReset = () => {
-    resetFilters();
+    setFilter({
+      militaryOnly: false,
+      search: '',
+      minAltitude: 0,
+      maxAltitude: 60000,
+      minSpeed: 0,
+      maxSpeed: 1500,
+      squawk: '',
+      typeCode: '',
+      country: '',
+      onGroundHidden: false,
+      categories: [],
+      militaryConfidence: 'all',
+    });
   };
 
   return (

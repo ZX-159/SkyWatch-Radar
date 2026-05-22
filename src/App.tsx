@@ -87,19 +87,19 @@ function TacticalPlatform() {
       </div>
 
       {/* Stats overlay - bottom left above status bar */}
-      <div className="absolute bottom-10 left-16 pointer-events-none z-20">
+      <div className="absolute bottom-8 left-16 pointer-events-none">
         <div className="pointer-events-auto">
           <StatsOverlay />
         </div>
       </div>
 
       {/* Right side panels container - ensure they are properly stacked and not overlapping */}
-      <div className="absolute top-16 right-4 bottom-10 pointer-events-none flex flex-col items-end gap-4 z-30">
+      <div className="absolute top-16 right-4 bottom-10 pointer-events-none flex flex-col items-end gap-4 z-30 overflow-hidden">
         <div className="pointer-events-auto flex-shrink-0">
           <AircraftInfoPanel />
         </div>
 
-        <div className="pointer-events-auto flex-shrink-0 flex flex-col gap-4">
+        <div className="pointer-events-auto flex-1 flex flex-col gap-4 overflow-hidden">
           <LayerManagerPanel
             visible={layerPanel?.visible ?? false}
             onClose={() => togglePanel('layer-manager')}

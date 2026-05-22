@@ -36,7 +36,6 @@ interface AircraftStoreState {
   hoverAircraft: (hex: string | null) => void;
   setFetchRegion: (region: { lat: number; lon: number; radius: number } | null) => void;
   setMilitaryMode: (enabled: boolean) => void;
-  resetFilters: () => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   setProviderName: (name: string) => void;
@@ -199,15 +198,10 @@ export const useAircraftStore = create<AircraftStoreState>()(
     setFetchRegion: (region) => set({ fetchRegion: region }),
     setMilitaryMode: (enabled) => {
       set({ isMilitaryMode: enabled });
-      // Sync militaryOnly filter with mode
-      get().setFilter({ militaryOnly: enabled });
-    },
-
-    resetFilters: () => {
-      const { aircraft } = get();
-      const allAircraft = Array.from(aircraft.values());
-      const filtered = applyFilters(allAircraft, DEFAULT_FILTER);
-      set({ filter: DEFAULT_FILTER, filteredAircraft: filtered, isMilitaryMode: DEFAULT_FILTER.militaryOnly });
+      // Clear filters when switching modes to ensure all aircraft show
+      if (!enabled) {
+        get().setFilter({ militaryOnly: false, militaryConfidence: 'all' });
+      }
     },
     setLoading: (loading) => set({ isLoading: loading }),
     setError: (error) => set({ error }),
@@ -274,25 +268,20 @@ export const useAircraftStore = create<AircraftStoreState>()(
               fetchRegion.lat, fetchRegion.lon, fetchRegion.radius
             );
           } else {
-            // If zoomed out, fetch the full global sample
-            if (viewState.zoom < 4) {
-              rawAircraft = await aircraftService.fetchAll();
-            } else {
-              // Adaptive radius based on zoom
-              const radius = Math.min(250, Math.max(50, 2000 / Math.pow(2, viewState.zoom - 1)));
-              const currentView = await aircraftService.fetchByBounds(viewState.latitude, viewState.longitude, radius);
+            // Adaptive radius based on zoom
+            const radius = Math.min(250, Math.max(50, 2000 / Math.pow(2, viewState.zoom - 1)));
+            const currentView = await aircraftService.fetchByBounds(viewState.latitude, viewState.longitude, radius);
 
-              // Background regional fetching for global presence
-              const region = REGION_CENTERS[fetchCount % REGION_CENTERS.length];
-              const extraAircraft = await aircraftService.fetchByBounds(region.lat, region.lon, region.radius);
+            // Background regional fetching for global presence
+            const region = REGION_CENTERS[fetchCount % REGION_CENTERS.length];
+            const extraAircraft = await aircraftService.fetchByBounds(region.lat, region.lon, region.radius);
 
-              // Merge unique aircraft
-              const merged = new Map();
-              [...currentView, ...extraAircraft].forEach(ac => {
-                if (ac.hex) merged.set(ac.hex, ac);
-              });
-              rawAircraft = Array.from(merged.values());
-            }
+            // Merge unique aircraft
+            const merged = new Map();
+            [...currentView, ...extraAircraft].forEach(ac => {
+              if (ac.hex) merged.set(ac.hex, ac);
+            });
+            rawAircraft = Array.from(merged.values());
 
             fetchCount++;
           }

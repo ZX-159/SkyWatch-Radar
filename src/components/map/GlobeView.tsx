@@ -45,19 +45,16 @@ export function GlobeView({ className = '' }: GlobeViewProps) {
       const cam = globe.planet.camera;
       const lonlat = cam.getLonLat();
       const height = cam.eye.length();
-      const zoom = Math.max(1, Math.min(18, Math.log2(40075016 / (height / 256))));
+      const zoom = Math.log2(40075016 / (height / 256));
 
-      // Only update store if the change is significant to prevent feedback loops
-      const current = useMapStore.getState().viewState;
-      const dLon = Math.abs(current.longitude - lonlat.lon);
-      const dLat = Math.abs(current.latitude - lonlat.lat);
-      const dZoom = Math.abs(current.zoom - zoom);
-
-      if (dLon > 0.01 || dLat > 0.01 || dZoom > 0.1) {
+      // Use a more conservative update to avoid feedback loops or excessive re-renders
+      const { viewState: current } = useMapStore.getState();
+      if (Math.abs(current.longitude - lonlat.lon) > 0.0001 ||
+          Math.abs(current.latitude - lonlat.lat) > 0.0001) {
         setViewState({
           longitude: lonlat.lon,
           latitude: lonlat.lat,
-          zoom: zoom,
+          zoom: Math.max(1, Math.min(18, zoom)),
         });
       }
     });
@@ -122,9 +119,8 @@ export function GlobeView({ className = '' }: GlobeViewProps) {
     const cam = globeRef.current.planet.camera;
     const current = cam.getLonLat();
 
-    // Only update camera if the change came from outside (e.g. 2D map)
-    if (Math.abs(current.lon - viewState.longitude) > 0.01 ||
-        Math.abs(current.lat - viewState.latitude) > 0.01) {
+    if (Math.abs(current.lon - viewState.longitude) > 0.001 ||
+        Math.abs(current.lat - viewState.latitude) > 0.001) {
       cam.setLonLat(new og.LonLat(viewState.longitude, viewState.latitude, cam.eye.length()));
     }
   }, [viewState.longitude, viewState.latitude, globeReady]);

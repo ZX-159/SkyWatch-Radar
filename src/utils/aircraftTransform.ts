@@ -6,14 +6,9 @@ export function transformAircraft(
   existing?: Aircraft,
   now: number = Date.now()
 ): Aircraft | null {
-  // Skip aircraft without position or with invalid coordinates
+  // Skip aircraft without position
   if (raw.lat === undefined || raw.lon === undefined) return null;
-
-  // Be more lenient with coordinate types, but they must be valid numbers eventually
-  const lat = typeof raw.lat === 'string' ? parseFloat(raw.lat) : raw.lat;
-  const lon = typeof raw.lon === 'string' ? parseFloat(raw.lon) : raw.lon;
-
-  if (isNaN(lat) || isNaN(lon)) return null;
+  if (typeof raw.lat !== 'number' || typeof raw.lon !== 'number') return null;
 
   const military = detectMilitary(raw);
 
@@ -50,10 +45,6 @@ export function transformAircraft(
     trail = [newTrailPoint];
   }
 
-  // Basic prediction for selected aircraft or if landing/takeoff is clear
-  // For simplicity in this demo, we'll just show the actual trail
-  // In a real app, we'd fetch route data from a service like ADSBDB
-
   return {
     hex: raw.hex || '',
     callsign: (raw.flight || '').trim(),
@@ -64,8 +55,8 @@ export function transformAircraft(
     origin: (raw as any).origin,
     destination: (raw as any).dest,
 
-    lat,
-    lon,
+    lat: raw.lat,
+    lon: raw.lon,
     altitude: alt,
     altitudeGeom: raw.alt_geom || alt,
     onGround,
